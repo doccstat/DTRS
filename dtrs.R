@@ -20,18 +20,18 @@ m3 <- 10
 m4 <- 4
 # Number of latent factors
 r <- 3
-
+# Subgroups
 s1 <- sample.int(m1, n1, replace = TRUE)
 s2 <- sample.int(m2, n2, replace = TRUE)
 s3 <- sample.int(m3, n3, replace = TRUE)
 s4 <- sample.int(m4, tt, replace = TRUE)
-
+# All the time points
 t_horizon <- sort(runif(tt, 0, 1))
-
+# Tensor decomposition matrices
 p1 <- mvtnorm::rmvnorm(n1, rep(0, r), diag(1, r))
 p2 <- mvtnorm::rmvnorm(n2, rep(0, r), diag(1, r))
 p3 <- mvtnorm::rmvnorm(n3, rep(0, r), diag(1, r))
-
+# hj functions
 h <- rep(list(NA), r)
 h[[1]] <- function(t) {
   sin(0.3 * pi * t)
@@ -42,6 +42,7 @@ h[[2]] <- function(t) {
 h[[3]] <- function(t) {
   cos(0.2 * pi * t) + 1
 }
+# ge functions
 g <- rep(list(NA), m4)
 g[[1]] <- function(t) {
   2 * t - 1
@@ -55,14 +56,15 @@ g[[3]] <- function(t) {
 g[[4]] <- function(t) {
   -5 * exp(t) + 10
 }
+# g function
 gfun <- function(t) {
   g[[s4[t == t_horizon]]](t)
 }
-
+# Subgroup-specific information
 q1 <- -1 + 0.4 * seq_len(m1)
 q2 <- -1.2 + 0.6 * seq_len(m2)
 q3 <- -0.4 + 0.2 * seq_len(m3)
-
+# Noise
 epsilon <- rnorm(n1 * n2 * n3 * tt, 0, 1)
 epsilon <- array(epsilon, c(n1, n2, n3, tt))
 
@@ -81,6 +83,7 @@ epsilon <- array(epsilon, c(n1, n2, n3, tt))
 #   }
 # }
 
+# hmat used to construct y tensor
 hmat <- matrix(NA, tt, r)
 for (t in seq_len(tt)) {
   for (j in seq_len(r)) {
@@ -101,7 +104,7 @@ for (t in seq_len(tt)) {
   }
   y[, , , t] <- y[, , , t] + gfun(t_horizon[t]) * qtensor + epsilon[, , , t]
 }
-
+# Missing data in the original data
 missing_rate <- 0.8
 missing_tensor <- array(rbinom(n1 * n2 * n3 * tt, 1, 1 - missing_rate), c(n1, n2, n3, tt))
 
@@ -115,7 +118,7 @@ nu <- NULL
 omega <- NULL
 
 mm <- an + kappa + 1
-
+# spline functions
 bb <- rep(list(rep(list(NA), mm)), r)
 aa <- rep(list(rep(list(NA), mm)), m4)
 
@@ -143,7 +146,7 @@ for (j in seq_len(m4)) {
   }
 }
 
-
+# alpha and beta parameters
 alpha <- matrix(0, r, mm)
 beta <- matrix(0, m4, mm)
 
@@ -168,7 +171,7 @@ for (j in seq_len(m4)) {
 # ghatfun <- function(t, kappa, beta) {
 #   ghat[[s4[t == t_horizon]]](t, kappa, beta)
 # }
-
+# Loss function
 likelihood <- function(y, r, kappa, lambda, p1, p2, p3, q1, q2, q3, s1, s2, s3, s4, t_horizon, alpha, beta, hhat, ghat, aa, bb, mm, nu, omega) {
   yhat <- array(0, c(nrow(p1), nrow(p2), nrow(p3), tt))
   for (t in seq_len(tt)) {
@@ -755,65 +758,7 @@ for (t in seq_len(length(t_horizon))) {
   y_reconstructed[, , , t] <- y_reconstructed[, , , t] + ghat[[s4[t]]](t, s4[t], kappa, result$beta, aa, omega, mm) * result$q1[s1] %o% result$q2[s2] %o% result$q3[s3]
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#####################################################################################################################################################################################################################################
 # Real data
 library(doRNG)
 load("data30buy.RData")
